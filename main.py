@@ -654,33 +654,54 @@ async def set_cookie_command(message: types.Message):
     await db.update_main_cookie(parts[1].strip())
     await message.reply("✅ **Main Cookie has been successfully updated securely.**")
 
-@dp.message(F.text.regexp("PHPSESSID") & F.text.regexp("cf_clearance"))
-async def handle_raw_cookie_dump(message: types.Message):
+# ==========================================
+# 🍪 SMART COOKIE EXTRACTOR FUNCTION
+# ==========================================
+@dp.message(F.text.contains("PHPSESSID") & F.text.contains("cf_clearance"))
+async def handle_smart_cookie_update(message: types.Message):
+    # 🟢 Owner သာလျှင် အသုံးပြုခွင့်ရှိမည်
     if message.from_user.id != OWNER_ID: 
-        return await message.reply("❌ You are not the owner.")
+        return await message.reply("❌ You are not authorized.")
 
     text = message.text
+    
+    # 🟢 ဆွဲထုတ်ရမည့် အဓိက Cookie နာမည်များ (လိုအပ်ပါက ထပ်တိုးနိုင်သည်)
+    target_keys = ["PHPSESSID", "cf_clearance", "__cf_bm", "_did", "_csrf"]
+    extracted_cookies = {}
+
     try:
-        phpsessid_match = re.search(r"['\"]?PHPSESSID['\"]?\s*[:=]\s*['\"]?([^'\";\s]+)['\"]?", text)
-        cf_clearance_match = re.search(r"['\"]?cf_clearance['\"]?\s*[:=]\s*['\"]?([^'\";\s]+)['\"]?", text)
-        cf_bm_match = re.search(r"['\"]?__cf_bm['\"]?\s*[:=]\s*['\"]?([^'\";\s]+)['\"]?", text)
-        did_match = re.search(r"['\"]?_did['\"]?\s*[:=]\s*['\"]?([^'\";\s]+)['\"]?", text)
+        for key in target_keys:
+            # 🟢 Python Dict ('key': 'val') နှင့် Header (key=val;) ပုံစံ နှစ်မျိုးလုံးကို ဖမ်းနိုင်သော Regex
+            pattern = rf"['\"]?{key}['\"]?\s*[:=]\s*['\"]?([^'\",;\s}}]+)['\"]?"
+            match = re.search(pattern, text)
+            if match:
+                extracted_cookies[key] = match.group(1)
 
-        if not phpsessid_match or not cf_clearance_match:
-            return await message.reply("PHPSESSID နှင့် cf_clearance ကို ရှာမတွေ့ပါ။ Format မှန်ကန်ကြောင်း စစ်ဆေးပါ။")
+        # 🟢 PHPSESSID နှင့် cf_clearance သည် မပါမဖြစ် လိုအပ်ပါသည်
+        if "PHPSESSID" not in extracted_cookies or "cf_clearance" not in extracted_cookies:
+            return await message.reply("❌ <b>Error:</b> `PHPSESSID` နှင့် `cf_clearance` ကို ရှာမတွေ့ပါ။ Format မှန်ကန်ကြောင်း စစ်ဆေးပါ။", parse_mode=ParseMode.HTML)
 
-        val_php = phpsessid_match.group(1)
-        val_cf = cf_clearance_match.group(1)
+        # 🟢 Dictionary မှ "key=value; key=value;" ပုံစံ String အဖြစ် ပြောင်းလဲခြင်း
+        formatted_cookie_str = "; ".join([f"{k}={v}" for k, v in extracted_cookies.items()])
 
-        formatted_cookie = f"PHPSESSID={val_php}; cf_clearance={val_cf};"
+        # 🟢 Database သို့ သိမ်းဆည်းခြင်း
+        await db.update_main_cookie(formatted_cookie_str)
         
-        if cf_bm_match: formatted_cookie += f" __cf_bm={cf_bm_match.group(1)};"
-        if did_match: formatted_cookie += f" _did={did_match.group(1)};"
+        # 🟢 အောင်မြင်ကြောင်းပြသရန် Message ဖန်တီးခြင်း
+        success_msg = "✅ <b>Cookies Successfully Extracted & Saved!</b>\n\n"
+        success_msg += "📦 <b>Extracted Data:</b>\n"
+        
+        for k, v in extracted_cookies.items():
+            # 🟢 စာသားအရမ်းရှည်နေပါက အလယ်ကိုဖြတ်ပြီး အတိုချုံးပြသမည် (ဥပမာ - cf_clearance)
+            display_v = f"{v[:15]}...{v[-15:]}" if len(v) > 35 else v
+            success_msg += f"🔸 <code>{k}</code> : {display_v}\n"
 
-        await db.update_main_cookie(formatted_cookie)
-        await message.reply(f"✅ **Smart Cookie Parser: Success!**\n\n🍪 **Saved Cookie:**\n`{formatted_cookie}`")
+        success_msg += f"\n🍪 <b>Formatted Final String:</b>\n<code>{formatted_cookie_str}</code>"
+
+        await message.reply(success_msg, parse_mode=ParseMode.HTML)
+        
     except Exception as e:
-        await message.reply(f"❌ Parsing Error: {str(e)}")
+        await message.reply(f"❌ <b>Parsing Error:</b> {str(e)}", parse_mode=ParseMode.HTML)
 
 # ==========================================
 # 💰 MANUAL BALANCE ADDITION (OWNER ONLY)
