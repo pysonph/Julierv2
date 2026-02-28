@@ -1390,9 +1390,9 @@ async def schedule_daily_cookie_renewal():
         if success:
             try: await bot.send_message(OWNER_ID, "✅ <b>System:</b> Proactive cookie renewal successful. Ready for the day!", parse_mode=ParseMode.HTML)
             except Exception: pass
-        else:
-            try: await bot.send_message(OWNER_ID, "❌ <b>System:</b> Proactive cookie renewal failed!", parse_mode=ParseMode.HTML)
-            except Exception: pass
+        #else:
+           # try: await bot.send_message(OWNER_ID, "❌ <b>System:</b> Proactive cookie renewal failed!", parse_mode=ParseMode.HTML)
+            #except Exception: pass
 
 
 async def notify_owner(text: str):
