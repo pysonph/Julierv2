@@ -9,6 +9,7 @@ import random
 from dotenv import load_dotenv
 import asyncio
 from playwright.async_api import async_playwright
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import html
 from collections import defaultdict
 import concurrent.futures
@@ -1521,60 +1522,6 @@ async def handle_check_role(message: types.Message):
 
 ###############################################
 # ==========================================
-# 🔍 1. DISPUTE & VERIFICATION COMMAND
-# ==========================================
-@dp.message(or_f(Command("checkcus"), F.text.regexp(r"(?i)^\.checkcus(?:$|\s+)")))
-async def check_official_customer(message: types.Message):
-    if message.from_user.id != OWNER_ID:
-        return await message.reply("❌ You are not authorized.")
-        
-    parts = message.text.strip().split()
-    if len(parts) < 2:
-        return await message.reply("⚠️ **Usage:** `.checkcus <Game_ID>`")
-        
-    game_id = parts[1]
-    loading_msg = await message.reply(f"🔍 Searching Official Record for Game ID: `{game_id}`...")
-    
-    scraper = await get_main_scraper()
-    headers = {'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest', 'Origin': 'https://www.smile.one'}
-    url = 'https://www.smile.one/merchant/customer'
-    
-    try:
-        # 🟢 Smile.one ၏ Customer Search ကို လှမ်းခေါ်ခြင်း (Keyword ဖြင့် ရှာမည်ဟု ယူဆပါသည်)
-        params = {'keyword': game_id} # ဝက်ဘ်ဆိုက်၏ Search Parameter အစစ်ပေါ်မူတည်၍ အပြောင်းအလဲရှိနိုင်ပါသည်
-        res = await asyncio.to_thread(scraper.get, url, params=params, headers=headers, timeout=15)
-        
-        if "login" in res.url.lower():
-            return await loading_msg.edit_text("⚠️ **Cookie Expired.** Please `/setcookie`.")
-            
-        soup = BeautifulSoup(res.text, 'html.parser')
-        
-        # 🟢 HTML Table ထဲမှ Data ကို ဆွဲထုတ်ခြင်း
-        table = soup.find('table')
-        if not table:
-            return await loading_msg.edit_text(f"❌ No official records found for Game ID: {game_id}")
-            
-        rows = table.find_all('tr')[1:6] # နောက်ဆုံး ၅ ကြိမ်ကိုသာ ယူမည်
-        if not rows:
-            return await loading_msg.edit_text(f"📜 Game ID `{game_id}` has no successful transaction history on Official Smile.one.")
-            
-        report = f"🔍 **Official Records for {game_id}**\n\n"
-        for row in rows:
-            cols = row.find_all('td')
-            if len(cols) >= 4:
-                # ဇယား၏ Column အစီအစဉ်အပေါ် မူတည်၍ Index (0, 1, 2) ပြောင်းလဲနိုင်သည်
-                date_str = cols[0].get_text(strip=True)
-                item_name = cols[2].get_text(strip=True)
-                status = cols[4].get_text(strip=True) if len(cols) > 4 else "Success"
-                report += f"📅 {date_str} | 💎 {item_name} | 📊 {status}\n"
-                
-        await loading_msg.edit_text(report)
-        
-    except Exception as e:
-        await loading_msg.edit_text(f"❌ Scrape Error: {str(e)}")
-        
-
-# ==========================================
 # 👑 2. VIP & TOP CUSTOMER COMMANDS
 # ==========================================
 @dp.message(or_f(Command("topcus"), F.text.regexp(r"(?i)^\.topcus$")))
@@ -1661,6 +1608,71 @@ async def daily_reconciliation_task():
             
         except Exception as e:
             print(f"Reconciliation Error: {e}")
+
+
+
+# ==========================================
+# 📋 AUTO FORMAT & COPY BUTTON (SMART WP FIX)
+# ==========================================
+@dp.message(F.text.regexp(r"^\d+\s*\(?\d+\)?.*"))
+async def format_and_copy_text(message: types.Message):
+    raw_text = message.text.strip()
+    
+    # 🟢 Regex ကိုသုံး၍ Player ID, Zone ID နှင့် နောက်ဆက်တွဲစာသားတို့ကို အပိုင်း ၃ ပိုင်း ခွဲထုတ်မည်
+    match = re.match(r"^(\d+)\s*\(?(\d+)\)?\s*(.*)$", raw_text)
+    
+    if match:
+        player_id = match.group(1)
+        zone_id = match.group(2)
+        suffix = match.group(3).strip() 
+        
+        # 🟢 နောက်ဆက်တွဲစာသား (Suffix) ကို Smart ဖြစ်အောင် ပြုပြင်မည်
+        if suffix:
+            # အက္ခရာအသေးပြောင်းပြီး Space များကို ဖယ်ရှားမည်
+            clean_suffix = suffix.lower().replace(" ", "")
+            
+            # wp နှင့် ဂဏန်းများ တွဲနေသလား (ဥပမာ - 1wp, wp2, 10wp) စစ်ဆေးမည်
+            wp_match = re.match(r"^(\d*)wp(\d*)$", clean_suffix)
+            
+            if wp_match:
+                # ရှေ့ကဂဏန်းနှင့် နောက်ကဂဏန်းကို ယူမည်
+                num_str = wp_match.group(1) + wp_match.group(2)
+                
+                # 1wp သို့မဟုတ် wp1 သို့မဟုတ် wp ပဲဆိုလျှင် "wp" လို့ပဲထားမည်
+                if num_str == "" or num_str == "1":
+                    processed_suffix = "wp"
+                else:
+                    # 2wp, 10wp စသည်တို့ဆိုလျှင် "wp2", "wp10" ပုံစံပြောင်းမည်
+                    processed_suffix = f"wp{num_str}"
+            else:
+                # wp မဟုတ်သော တခြားစာသား (ဥပမာ - 1049) ဆိုလျှင် မူလအတိုင်းထားမည်
+                processed_suffix = suffix 
+                
+            formatted_raw = f"{player_id} ({zone_id}) {processed_suffix}"
+        else:
+            formatted_raw = f"{player_id} ({zone_id})"
+    else:
+        # လွဲချော်သွားပါက မူလစာသားအတိုင်း ထားမည်
+        formatted_raw = raw_text
+
+    # 🟢 ဖုန်းပေါ်တွင် စာသားကို တစ်ချက်နှိပ်ရုံဖြင့် Copy ကူးနိုင်ရန် <code>...</code> ဖြင့် ပိတ်ပေးမည်
+    formatted_text = f"<code>{formatted_raw}</code>"
+    
+    # 🟢 Copy 🤍 Button ဖန်တီးခြင်း
+    try:
+        from aiogram.types import CopyTextButton
+        copy_btn = InlineKeyboardButton(
+            text="ᴄᴏᴘʏ",
+            copy_text=CopyTextButton(text=formatted_raw)
+        )
+    except ImportError:
+        copy_btn = InlineKeyboardButton(text="ᴄᴏᴘʏ", switch_inline_query=formatted_raw)
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[copy_btn]])
+    
+    # 🟢 Reply ပြန်ပို့ပေးမည်
+    await message.reply(formatted_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+
 
 
 ##############################################
