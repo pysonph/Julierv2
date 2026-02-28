@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import asyncio
 from playwright.async_api import async_playwright
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import types
 import html
 from collections import defaultdict
 import concurrent.futures
@@ -1614,63 +1615,90 @@ async def daily_reconciliation_task():
 # ==========================================
 # 📋 AUTO FORMAT & COPY BUTTON (SMART WP FIX)
 # ==========================================
-@dp.message(F.text.regexp(r"^\d+\s*\(?\d+\)?.*"))
+@dp.message(or_f(
+    F.text.regexp(r"^\d{7,}(?:\s+\(?\d+\)?)?\s*.*$"),
+    F.caption.regexp(r"^\d{7,}(?:\s+\(?\d+\)?)?\s*.*$")
+))
 async def format_and_copy_text(message: types.Message):
-    raw_text = message.text.strip()
+    raw_text = (message.text or message.caption).strip()
     
-    # 🟢 Regex ကိုသုံး၍ Player ID, Zone ID နှင့် နောက်ဆက်တွဲစာသားတို့ကို အပိုင်း ၃ ပိုင်း ခွဲထုတ်မည်
-    match = re.match(r"^(\d+)\s*\(?(\d+)\)?\s*(.*)$", raw_text)
-    
-    if match:
-        player_id = match.group(1)
-        zone_id = match.group(2)
-        suffix = match.group(3).strip() 
+    if re.match(r"^\d{7,}$", raw_text):
+        formatted_raw = raw_text
         
-        # 🟢 နောက်ဆက်တွဲစာသား (Suffix) ကို Smart ဖြစ်အောင် ပြုပြင်မည်
-        if suffix:
-            # အက္ခရာအသေးပြောင်းပြီး Space များကို ဖယ်ရှားမည်
-            clean_suffix = suffix.lower().replace(" ", "")
+    elif re.match(r"^\d{7,}\s+\d+", raw_text):
+        match = re.match(r"^(\d{7,})\s+(\d+)\s*(.*)$", raw_text)
+        if match:
+            player_id = match.group(1)
+            zone_id = match.group(2)
+            suffix = match.group(3).strip()
             
-            # wp နှင့် ဂဏန်းများ တွဲနေသလား (ဥပမာ - 1wp, wp2, 10wp) စစ်ဆေးမည်
-            wp_match = re.match(r"^(\d*)wp(\d*)$", clean_suffix)
-            
-            if wp_match:
-                # ရှေ့ကဂဏန်းနှင့် နောက်ကဂဏန်းကို ယူမည်
-                num_str = wp_match.group(1) + wp_match.group(2)
+            if suffix:
+                # wp စစ်တာ အရင်အတိုင်းပဲ
+                clean_suffix = suffix.lower().replace(" ", "")
+                wp_match = re.match(r"^(\d*)wp(\d*)$", clean_suffix)
                 
-                # 1wp သို့မဟုတ် wp1 သို့မဟုတ် wp ပဲဆိုလျှင် "wp" လို့ပဲထားမည်
-                if num_str == "" or num_str == "1":
-                    processed_suffix = "wp"
+                if wp_match:
+                    num_str = wp_match.group(1) + wp_match.group(2)
+                    if num_str == "" or num_str == "1":
+                        processed_suffix = "wp"
+                    else:
+                        processed_suffix = f"wp{num_str}"
                 else:
-                    # 2wp, 10wp စသည်တို့ဆိုလျှင် "wp2", "wp10" ပုံစံပြောင်းမည်
-                    processed_suffix = f"wp{num_str}"
+                    processed_suffix = suffix
+                    
+                formatted_raw = f"{player_id} ({zone_id}) {processed_suffix}"
             else:
-                # wp မဟုတ်သော တခြားစာသား (ဥပမာ - 1049) ဆိုလျှင် မူလအတိုင်းထားမည်
-                processed_suffix = suffix 
-                
-            formatted_raw = f"{player_id} ({zone_id}) {processed_suffix}"
+                formatted_raw = f"{player_id} ({zone_id})"
         else:
-            formatted_raw = f"{player_id} ({zone_id})"
+            formatted_raw = raw_text
+    
+    elif re.match(r"^\d{7,}\s*\(\d+\)", raw_text):
+        match = re.match(r"^(\d{7,})\s*\((\d+)\)\s*(.*)$", raw_text)
+        if match:
+            player_id = match.group(1)
+            zone_id = match.group(2)
+            suffix = match.group(3).strip()
+            
+            if suffix:
+                clean_suffix = suffix.lower().replace(" ", "")
+                wp_match = re.match(r"^(\d*)wp(\d*)$", clean_suffix)
+                
+                if wp_match:
+                    num_str = wp_match.group(1) + wp_match.group(2)
+                    if num_str == "" or num_str == "1":
+                        processed_suffix = "wp"
+                    else:
+                        processed_suffix = f"wp{num_str}"
+                else:
+                    processed_suffix = suffix
+                    
+                formatted_raw = f"{player_id} ({zone_id}) {processed_suffix}"
+            else:
+                formatted_raw = f"{player_id} ({zone_id})"
+        else:
+            formatted_raw = raw_text
+            
     else:
-        # လွဲချော်သွားပါက မူလစာသားအတိုင်း ထားမည်
         formatted_raw = raw_text
 
-    # 🟢 ဖုန်းပေါ်တွင် စာသားကို တစ်ချက်နှိပ်ရုံဖြင့် Copy ကူးနိုင်ရန် <code>...</code> ဖြင့် ပိတ်ပေးမည်
     formatted_text = f"<code>{formatted_raw}</code>"
     
-    # 🟢 Copy 🤍 Button ဖန်တီးခြင်း
     try:
         from aiogram.types import CopyTextButton
         copy_btn = InlineKeyboardButton(
             text="ᴄᴏᴘʏ",
-            copy_text=CopyTextButton(text=formatted_raw)
+            copy_text=CopyTextButton(text=formatted_raw),
+            style="primary"
         )
     except ImportError:
-        copy_btn = InlineKeyboardButton(text="ᴄᴏᴘʏ", switch_inline_query=formatted_raw)
+        copy_btn = InlineKeyboardButton(
+            text="ᴄᴏᴘʏ",
+            switch_inline_query=formatted_raw,
+            style="primary"
+        )
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[copy_btn]])
     
-    # 🟢 Reply ပြန်ပို့ပေးမည်
     await message.reply(formatted_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
 
