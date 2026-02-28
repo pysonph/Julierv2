@@ -1653,14 +1653,14 @@ async def send_help_message(message: types.Message):
     
     help_text = (
         f"<b>🤖 𝐁𝐎𝐓 𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒 𝐌𝐄𝐍𝐔</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"━━━━━━━━━━━━━━━━\n\n"
         f"<b>💎 𝐌𝐋𝐁Ｂ 𝐃𝐢𝐚𝐦𝐨𝐧𝐝𝐬 (ဝယ်ယူရန်)</b>\n"
         f"🇧🇷 BR MLBB: <code>msc/mlb/br/b ID (Zone) Pack</code>\n"
         f"🇵🇭 PH MLBB: <code>mlp/ph/p ID (Zone) Pack</code>\n\n"
         f"<b>♟️ 𝐌𝐚𝐠𝐢𝐜 𝐂𝐡𝐞𝐬𝐬 (ဝယ်ယူရန်)</b>\n"
         f"🇧🇷 BR MCC: <code>mcc/mcb ID (Zone) Pack</code>\n"
         f"🇵🇭 PH MCC: <code>mcp ID (Zone) Pack</code>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"━━━━━━━━━━━━━━━━\n\n"
         f"<b>👤 𝐔𝐬𝐞𝐫 𝐓𝐨𝐨𝐥𝐬 (အသုံးပြုသူများအတွက်)</b>\n"
         f"🔹 <code>.topup Code</code>       : Smile Code ဖြည့်သွင်းရန်\n"
         f"🔹 <code>.bal</code>      : မိမိ Wallet Balance စစ်ရန်\n"
@@ -1676,7 +1676,7 @@ async def send_help_message(message: types.Message):
     # 🟢 Owner အတွက်သာ ပေါ်မည့် သီးသန့် Command များ
     if is_owner:
         help_text += (
-            f"\n━━━━━━━━━━━━━━━━━━━━\n"
+            f"\n━━━━━━━━━━━━━━━━\n"
             f"<b>👑 𝐎𝐰𝐧𝐞𝐫 𝐓𝐨𝐨𝐥𝐬 (Admin သီးသန့်)</b>\n\n"
             f"<b>👥 ယူဆာစီမံခန့်ခွဲမှု</b>\n"
             f"🔸 <code>.add ID</code>    : User အသစ်ထည့်ရန်\n"
@@ -1693,7 +1693,7 @@ async def send_help_message(message: types.Message):
             f"🔸 <code>/setcookie</code>  : Main Cookie အသစ်ပြောင်းရန်\n"
         )
         
-    help_text += f"\n━━━━━━━━━━━━━━━━━━━━"
+    help_text += f"\n━━━━━━━━━━━━━━━━"
     await message.reply(help_text, parse_mode=ParseMode.HTML)
 
 @dp.message(Command("start"))
