@@ -1525,7 +1525,7 @@ async def handle_check_role(message: types.Message):
     }
 
     try:
-        async with AsyncSession(impersonate="chrome120") as local_scraper:
+        async with async_playwright(impersonate="chrome120") as local_scraper:
             res = await local_scraper.get(url, params=params, headers=headers, timeout=15)
         
         try:
