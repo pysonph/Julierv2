@@ -63,7 +63,7 @@ dp = Dispatcher()
 dp.message.middleware(MaintenanceMiddleware())
 
 user_locks = defaultdict(asyncio.Lock)
-api_semaphore = asyncio.Semaphore(3)
+api_semaphore = asyncio.Semaphore(5)
 auth_lock = asyncio.Lock()
 last_login_time = 0
 GLOBAL_SCAMMERS = set()
