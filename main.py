@@ -1085,8 +1085,8 @@ async def execute_buy_process(message, lines, regex_pattern, currency, packages_
                         display_err = "Insufficient balance"
                     elif "invalid" in error_text or "not found" in error_text:
                         display_err = "Invalid Account"
-                    lif "query failed" in error_text:
-                        display_err = "Smileone website api error try again."
+                    elif "query failed" in error_text:
+                        display_err = "Smileone website error try again."
                     elif "limit" in error_text or "exceed" in error_text or "máximo" in error_text or "limite" in error_text:
                         display_err = "Weekly Pass Limit Exceeded"
                     elif "zone" in error_text or "region" in error_text or "country" in error_text or "indonesia" in error_text or "support recharge" in error_text or "Singapore" in error_text or "Russia" in error_text or "the Philippines" in error_text:
