@@ -1127,8 +1127,8 @@ async def handle_br_mlbb(message: types.Message):
             match = re.search(regex, line)
             if match: total_pkgs += len(match.group(3).split())
             
-        if total_pkgs > 3: 
-            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၃ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
+        if total_pkgs > 5: 
+            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး 5 ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'BR', [DOUBLE_DIAMOND_PACKAGES, BR_PACKAGES], process_smile_one_order, "MLBB")
     except Exception as e: 
@@ -1147,8 +1147,8 @@ async def handle_ph_mlbb(message: types.Message):
             match = re.search(regex, line)
             if match: total_pkgs += len(match.group(3).split())
             
-        if total_pkgs > 3: 
-            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၃ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
+        if total_pkgs > 5: 
+            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး 5 ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'PH', PH_PACKAGES, process_smile_one_order, "MLBB")
     except Exception as e: 
