@@ -615,7 +615,7 @@ async def handle_br_mlbb(message: types.Message):
             if match: total_pkgs += len(match.group(3).split())
             
         if total_pkgs > 10: 
-            return await message.reply("❌ 10 Limit Exceeded")
+            return await message.reply("❌ 10 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၁၀ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'BR', [DOUBLE_DIAMOND_PACKAGES, BR_PACKAGES], easy_bby.process_smile_one_order, "MLBB")
     except Exception as e: 
@@ -635,12 +635,12 @@ async def handle_ph_mlbb(message: types.Message):
             if match: total_pkgs += len(match.group(3).split())
             
         if total_pkgs > 10: 
-            return await message.reply("❌ 10 Limit Exceeded")
+            return await message.reply("❌ 10 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၁၀ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'PH', PH_PACKAGES, easy_bby.process_smile_one_order, "MLBB")
     except Exception as e: 
         await message.reply(f"System Error: {str(e)}")
-
+        
 @dp.message(F.text.regexp(r"(?i)^(?:mcc|mcb)\s*\d+"))
 async def handle_br_mcc(message: types.Message):
     if not await is_authorized(message.from_user.id): 
@@ -655,12 +655,12 @@ async def handle_br_mcc(message: types.Message):
             if match: total_pkgs += len(match.group(3).split())
             
         if total_pkgs > 5: 
-            return await message.reply("❌ 5 Limit Exceeded")
+            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၅ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'BR', MCC_PACKAGES, easy_bby.process_mcc_order, "MCC", is_mcc=True)
     except Exception as e: 
         await message.reply(f"System Error: {str(e)}")
-
+        
 @dp.message(F.text.regexp(r"(?i)^mcp\s*\d+"))
 async def handle_ph_mcc(message: types.Message):
     if not await is_authorized(message.from_user.id): 
@@ -675,7 +675,7 @@ async def handle_ph_mcc(message: types.Message):
             if match: total_pkgs += len(match.group(3).split())
             
         if total_pkgs > 5: 
-            return await message.reply("❌ 5 Limit Exceeded")
+            return await message.reply("❌ 5 Limit Exceeded: တစ်ကြိမ်လျှင် အများဆုံး ၅ ခုသာ ဝယ်ယူနိုင်ပါသည်။")
             
         await execute_buy_process(message, lines, regex, 'PH', PH_MCC_PACKAGES, easy_bby.process_mcc_order, "MCC", is_mcc=True)
     except Exception as e: 
