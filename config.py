@@ -10,7 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 load_dotenv()
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-OWNER_ID = int(os.getenv('OWNER_ID', 1318826936))
+OWNER_ID = int(os.getenv('OWNER_ID', 6437656033))
 GOOGLE_EMAIL = os.getenv('GOOGLE_EMAIL')
 GOOGLE_PASS = os.getenv('GOOGLE_PASS')
 
